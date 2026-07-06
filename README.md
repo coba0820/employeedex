@@ -1,21 +1,81 @@
-```txt
-npm install
-npm run dev
+# 社員図鑑 (EMPLOYEDEX)
+
+## プロジェクト概要
+- **名称**: 社員図鑑 - Our Members Guide -
+- **目的**: 従来のHR/社員管理システムではなく、"社員ポケモン図鑑"のようなコレクション感覚で社内メンバーを知り、「この人と話してみたい」「会社にはこんな面白い人がいる」という気づきと社内コミュニケーションを促すためのWebアプリ。
+- **デザインコンセプト**: ポケモン図鑑・遊戯王カード・野球カード・トレーディングカード・雑誌プロフィールを融合し、Apple/Notion/LINE/任天堂レベルのクオリティを目指した「遊び心のある高品質」なUI。左サイドバー型のSaaSダッシュボードレイアウト + ダークネイビーの高級感あるトレーディングカードデザイン。
+
+## 現在完了している機能
+- **ホーム(メンバー一覧)**: 社員カードのグリッド表示、キーワード検索、部署/MBTI/恋愛MBTI/社歴/性別/エリア/タグによる絞り込み、新しい順・社歴順・名前順・ランダムの並び替え
+- **社員詳細ページ**: プロフィール全項目表示、前後の社員へのナビゲーション(矢印ボタン・矢印キー)、MBTI/恋愛MBTIのカラー情報パネル、パラメータ詳細(6能力値の横棒グラフ+説明文)
+- **トレーディングカード機能**: 社員ごとに自動生成されるダークネイビーの高級トレーディングカード(写真・名前・ニックネーム・部署・MBTI・社歴・キャッチコピー・レアリティ・属性タイプ・6能力値バー表示)。マウス/タッチで3Dチルト+ホログラム演出。PNG画像としてダウンロード可能(html2canvas)
+- **レアリティ**: N/R/SR/SSR/UR/LEGEND の6段階。カードの縁の光り方・ホログラムアニメーションに反映
+- **バッジ/タグ**: 絵文字付きタグ(competition, coffee, golf など18種)。検索フィルタとしても機能
+- **図鑑ナンバー**: No.001〜連番、詳細ページで前後移動可能
+- **お気に入り**: カード上のハートボタンでトグル、専用のお気に入り一覧ページ
+- **管理画面(admin)**: パスコードログイン制。社員の追加/編集/削除、部署の追加/編集/削除、タグの追加/削除、レアリティの色変更、能力値(★1-5)編集
+- **レスポンシブ対応**: 960px以下でサイドバーがハンバーガーメニュー式のドロワーに変化
+
+## URL / 画面構成
+| パス | 内容 |
+|---|---|
+| `/` | ホーム(社員一覧・検索・絞り込み) |
+| `/employee/:id` | 社員詳細ページ(例: `/employee/emp001`) |
+| `/favorites` | お気に入り一覧 |
+| `/admin` | 管理画面(要パスコード: `EMPLOYEDEX2026`) |
+
+## データ構造・使用ストレージ
+- **現状**: ローカルJSON + localStorage方式(バックエンドサーバー不要)
+  - `public/static/data/employees.json`: 社員データ本体(10名分のダミーデータ)
+  - `public/static/data/masters.json`: マスタデータ(部署・レアリティ・カードタイプ・タグ・MBTI選択肢・MBTI性格名称・能力値ラベル)
+  - `localStorage`: 管理画面での編集内容(社員データ/マスタデータの差分スナップショット)、お気に入りID一覧、管理者ログイン状態を保持
+- **データ層**: `public/static/js/dataStore.js` が全データ操作を非同期メソッド経由に統一しており、将来的に Cloudflare D1 / Supabase などへ移行しやすい設計になっている
+
+## 技術スタック
+- **フロントエンド**: Vanilla JS(SPA自作ルーター) + TailwindCSS不使用の独自CSS設計システム + FontAwesome
+- **バックエンド**: Hono (Cloudflare Pages/Workers)
+- **カード画像出力**: html2canvas (CDN)
+- **画像**: fal-ai/flux-2-pro で生成したフォトリアルな社員写真(イラストではなく実写風)
+
+## 主要ファイル構成
+```
+src/
+  index.tsx        # Honoエントリポイント(SPAシェル配信)
+  renderer.tsx      # HTML head/body定義、スクリプト読み込み順
+public/static/
+  css/style.css     # デザインシステム(サイドバー+ダークネイビーカード)
+  data/
+    employees.json  # 社員データ
+    masters.json    # マスタデータ
+  images/employees/ # 社員写真(001.png〜010.png)
+  js/
+    dataStore.js         # データ層(CRUD・お気に入り・認証・日付計算)
+    components.js        # 共通UI(サイドバー、社員ミニカード、トースト、モーダル)
+    card-renderer.js      # トレーディングカード生成・3Dチルト・PNGダウンロード
+    app.js                # SPAルーター
+    pages/
+      home.js       # ホーム(検索・絞り込み・並び替え)
+      detail.js     # 社員詳細
+      favorites.js  # お気に入り一覧
+      admin.js      # 管理画面(CRUD)
 ```
 
-```txt
-npm run deploy
-```
+## 使い方ガイド
+1. トップページで社員カードを眺めたり、検索・絞り込み・並び替えで気になる社員を探す
+2. カードをクリックすると詳細ページへ。トレーディングカードのパラメータや人物紹介を確認できる
+3. ハートアイコンでお気に入り登録、`お気に入り`ページでまとめて確認
+4. 詳細ページの「カードを保存」ボタンでトレーディングカードをPNG画像としてダウンロード
+5. 管理者は `/admin` からパスコード(`EMPLOYEDEX2026`)でログインし、社員データ・部署・タグ・レアリティを編集可能
 
-[For generating/synchronizing types based on your Worker configuration run](https://developers.cloudflare.com/workers/wrangler/commands/#types):
+## 未実装・今後の拡張候補
+- Cloudflare D1 / KV への移行(現状はJSON + localStorageのローカル完結型)
+- 管理画面からのカードデザイン(配色・レイアウト)自体のカスタマイズ
+- LINE/Slackへのカード直接共有機能(現状はPNGダウンロードのみ)
+- 社員写真のアップロード機能(現状は管理画面でURL入力のみ)
+- 検索結果のページネーション(現状は全件表示、社員数が増えた場合は要検討)
 
-```txt
-npm run cf-typegen
-```
-
-Pass the `CloudflareBindings` as generics when instantiation `Hono`:
-
-```ts
-// src/index.ts
-const app = new Hono<{ Bindings: CloudflareBindings }>()
-```
+## デプロイ状況
+- **プラットフォーム**: Cloudflare Pages(想定)
+- **現状**: サンドボックス内 PM2 + wrangler pages dev でローカル動作確認済み
+- **技術スタック**: Hono + Vanilla JS + カスタムCSS
+- **最終更新**: 2026-07-06(サイドバー型ダッシュボード + ダークネイビートレーディングカードへのデザイン全面刷新)
