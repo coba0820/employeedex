@@ -79,3 +79,7 @@ public/static/
 - **現状**: サンドボックス内 PM2 + wrangler pages dev でローカル動作確認済み
 - **技術スタック**: Hono + Vanilla JS + カスタムCSS
 - **最終更新**: 2026-07-06(サイドバー型ダッシュボード + ダークネイビートレーディングカードへのデザイン全面刷新)
+
+## Development Notes
+
+Git + VS Code environment is ready.
