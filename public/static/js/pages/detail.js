@@ -125,7 +125,7 @@ const DetailPage = (() => {
             <div class="detail-info-grid single">
               <div class="info-panel mbti">
                 <span class="info-panel-label">MBTI</span>
-                <div class="info-panel-value">${esc(emp.mbti)}</div>
+                <div class="info-panel-value">${Components.formatMbti(emp.mbti, masters)}</div>
               </div>
             </div>
 

@@ -32,7 +32,6 @@ type EmployeeRow = {
   catchphrase?: string | null
   catch_copy?: string | null
   mbti?: string | null
-  love_mbti?: string | null
   strengths?: string | null
   weaknesses?: string | null
   hobby?: string | null
@@ -66,7 +65,6 @@ type Employee = {
   joinDate: string
   catchphrase: string
   mbti: string
-  loveMbti: string
   strengths: string
   weaknesses: string
   hobby: string
@@ -104,7 +102,6 @@ const EMPLOYEE_WRITE_COLUMNS = [
   'catchphrase',
   'catch_copy',
   'mbti',
-  'love_mbti',
   'strengths',
   'weaknesses',
   'hobby',
@@ -181,7 +178,6 @@ function toEmployee(row: EmployeeRow, index = 0): Employee {
     joinDate: asText(row.join_date, asText(row.joined_at)),
     catchphrase: asText(row.catchphrase, asText(row.catch_copy)),
     mbti: asText(row.mbti),
-    loveMbti: asText(row.love_mbti),
     strengths: asText(row.strengths),
     weaknesses: asText(row.weaknesses),
     hobby: asText(row.hobby, asText(row.hobbies)),
@@ -213,7 +209,6 @@ function mergeEmployee(body: JsonRecord, base: Employee): Employee {
     joinDate: asText(body.joinDate, base.joinDate),
     catchphrase: asText(body.catchphrase, base.catchphrase),
     mbti: asText(body.mbti, base.mbti),
-    loveMbti: asText(body.loveMbti, base.loveMbti),
     strengths: asText(body.strengths, base.strengths),
     weaknesses: asText(body.weaknesses, base.weaknesses),
     hobby: asText(body.hobby, base.hobby),
@@ -263,7 +258,6 @@ function valueForEmployeeColumn(employee: Employee, column: string) {
     case 'catchphrase':
     case 'catch_copy': return employee.catchphrase
     case 'mbti': return employee.mbti
-    case 'love_mbti': return employee.loveMbti
     case 'strengths': return employee.strengths
     case 'weaknesses': return employee.weaknesses
     case 'hobby':
@@ -494,7 +488,6 @@ app.post('/api/employees', async (c) => {
     joinDate: '',
     catchphrase: '',
     mbti: '',
-    loveMbti: '',
     strengths: '',
     weaknesses: '',
     hobby: '',

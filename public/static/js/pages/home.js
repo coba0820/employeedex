@@ -14,7 +14,8 @@ const EmployeeSearch = (() => {
       tenureRange: '',
       gender: '',
       area: '',
-      tags: []
+      tags: [],
+      sort: 'name'
     };
   }
 
@@ -80,13 +81,33 @@ const EmployeeSearch = (() => {
     });
   }
 
+  function sortEmployees(employees, sortKey) {
+    let list = employees.slice();
+    switch (sortKey) {
+      case 'new':
+        list.sort((a, b) => new Date(b.joinDate) - new Date(a.joinDate));
+        break;
+      case 'tenure':
+        list.sort((a, b) => new Date(a.joinDate) - new Date(b.joinDate));
+        break;
+      case 'random':
+        list = list.map(e => [Math.random(), e]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
+        break;
+      case 'name':
+      default:
+        list.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+        break;
+    }
+    return list;
+  }
+
   function renderActiveFilterPills(masters, state, prefix) {
     const pills = [];
     if (state.department) {
       const d = masters.departments.find(x => x.id === state.department);
       pills.push({ key: 'department', label: '部署: ' + (d ? d.name : state.department) });
     }
-    if (state.mbti) pills.push({ key: 'mbti', label: 'MBTI: ' + state.mbti });
+    if (state.mbti) pills.push({ key: 'mbti', label: 'MBTI: ' + Components.formatMbti(state.mbti, masters) });
     if (state.gender) pills.push({ key: 'gender', label: '性別: ' + state.gender });
     if (state.area) pills.push({ key: 'area', label: 'エリア: ' + state.area });
     if (state.tenureRange) {
@@ -138,7 +159,7 @@ const EmployeeSearch = (() => {
             <label>MBTI</label>
             <select class="filter-select" id="${prefix}-filter-mbti">
               <option value="">すべて</option>
-              ${masters.mbtiOptions.map(m => `<option value="${m}" ${state.mbti === m ? 'selected' : ''}>${m}</option>`).join('')}
+              ${masters.mbtiOptions.map(m => `<option value="${m}" ${state.mbti === m ? 'selected' : ''}>${Components.formatMbti(m, masters)}</option>`).join('')}
             </select>
           </div>
           <div class="filter-group">
@@ -177,12 +198,12 @@ const EmployeeSearch = (() => {
   }
 
   function renderResults(container, employees, masters, state, opts) {
-    if (!hasSearchInput(state)) {
+    if (!opts.alwaysShowResults && !hasSearchInput(state)) {
       container.innerHTML = opts.emptyBeforeSearchHtml || '';
       return;
     }
 
-    const filtered = applyFilters(employees, state);
+    const filtered = sortEmployees(applyFilters(employees, state), state.sort);
     if (filtered.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
@@ -195,11 +216,26 @@ const EmployeeSearch = (() => {
     }
 
     container.innerHTML = `
-      <div class="result-count"><b>${filtered.length}</b> 名の社員が見つかりました</div>
+      ${opts.showSort ? `
+      <div class="sort-row">
+        <div class="result-count"><b>${filtered.length}</b> 名の社員が見つかりました</div>
+        <div class="sort-tabs">
+          <button class="sort-tab ${state.sort === 'name' ? 'active' : ''}" data-sort="${opts.prefix}" data-sort-key="name">名前順</button>
+          <button class="sort-tab ${state.sort === 'new' ? 'active' : ''}" data-sort="${opts.prefix}" data-sort-key="new">新しい順</button>
+          <button class="sort-tab ${state.sort === 'tenure' ? 'active' : ''}" data-sort="${opts.prefix}" data-sort-key="tenure">社歴順</button>
+          <button class="sort-tab ${state.sort === 'random' ? 'active' : ''}" data-sort="${opts.prefix}" data-sort-key="random">ランダム</button>
+        </div>
+      </div>` : `<div class="result-count"><b>${filtered.length}</b> 名の社員が見つかりました</div>`}
       <div class="employee-grid">${filtered.map((emp, i) => Components.renderEmployeeCard(emp, masters, { index: i })).join('')}</div>
     `;
     Components.bindFavToggles(container);
     Components.bindCardLinks(container);
+    container.querySelectorAll(`[data-sort="${opts.prefix}"]`).forEach(tab => {
+      tab.addEventListener('click', () => {
+        state.sort = tab.getAttribute('data-sort-key');
+        renderResults(container, employees, masters, state, opts);
+      });
+    });
   }
 
   function bind(root, employees, masters, state, opts) {
@@ -342,7 +378,8 @@ const HomePage = (() => {
     Router.bindLinks(root);
     EmployeeSearch.bind(root, employees, masters, state, {
       prefix: 'home',
-      emptyBeforeSearchHtml: ''
+      alwaysShowResults: true,
+      showSort: true
     });
   }
 

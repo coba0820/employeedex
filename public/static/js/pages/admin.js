@@ -132,7 +132,7 @@ const AdminPage = (() => {
                 <td><b>${esc(emp.name)}</b><br><span style="color:var(--text-tertiary);font-size:12px;">${esc(emp.nickname)}</span></td>
                 <td><span class="dept-pill" style="background:${dept.color}">${esc(dept.name)}</span></td>
                 <td>${Components.renderRarityBadge(emp.rarity, cachedMasters)}</td>
-                <td>${esc(emp.mbti)}</td>
+                <td>${Components.formatMbti(emp.mbti, cachedMasters)}</td>
                 <td>
                   <div class="admin-actions-cell">
                     <button class="icon-action-btn" data-edit-emp="${emp.id}" title="編集"><i class="fa-solid fa-pen"></i></button>
@@ -182,7 +182,7 @@ const AdminPage = (() => {
     const emp = empId ? cachedEmployees.find(e => e.id === empId) : {
       name: '', nickname: '', photo: '/static/images/employees/001.png', department: cachedMasters.departments[0].id,
       position: '', jobDescription: '', gender: cachedMasters.genderOptions[0], birthDate: '', area: '', joinDate: '',
-      catchphrase: '', mbti: cachedMasters.mbtiOptions[0], loveMbti: cachedMasters.mbtiOptions[0],
+      catchphrase: '', mbti: cachedMasters.mbtiOptions[0],
       strengths: '', weaknesses: '', hobby: '', favorites: '', workStyle: '', personalityType: '',
       characterInOffice: '', freeComment: '', rarity: 'N', cardType: cachedMasters.cardTypes[0].id,
       stats: { comm: 3, action: 3, planning: 3, analysis: 3, idea: 3, leadership: 3 }, tags: []
@@ -215,11 +215,7 @@ const AdminPage = (() => {
           <div class="form-field full"><label>一言キャッチコピー</label><input type="text" id="f-catchphrase" value="${esc(emp.catchphrase)}" /></div>
           <div class="form-field">
             <label>MBTI</label>
-            <select id="f-mbti">${cachedMasters.mbtiOptions.map(m => `<option value="${m}" ${emp.mbti === m ? 'selected' : ''}>${m}</option>`).join('')}</select>
-          </div>
-          <div class="form-field">
-            <label>恋愛MBTI</label>
-            <select id="f-loveMbti">${cachedMasters.mbtiOptions.map(m => `<option value="${m}" ${emp.loveMbti === m ? 'selected' : ''}>${m}</option>`).join('')}</select>
+            <select id="f-mbti">${cachedMasters.mbtiOptions.map(m => `<option value="${m}" ${emp.mbti === m ? 'selected' : ''}>${Components.formatMbti(m, cachedMasters)}</option>`).join('')}</select>
           </div>
           <div class="form-field"><label>得意なこと</label><input type="text" id="f-strengths" value="${esc(emp.strengths)}" /></div>
           <div class="form-field"><label>苦手なこと</label><input type="text" id="f-weaknesses" value="${esc(emp.weaknesses)}" /></div>
@@ -303,7 +299,6 @@ const AdminPage = (() => {
             joinDate: ov.querySelector('#f-joinDate').value,
             catchphrase: ov.querySelector('#f-catchphrase').value.trim(),
             mbti: ov.querySelector('#f-mbti').value,
-            loveMbti: ov.querySelector('#f-loveMbti').value,
             strengths: ov.querySelector('#f-strengths').value.trim(),
             weaknesses: ov.querySelector('#f-weaknesses').value.trim(),
             hobby: ov.querySelector('#f-hobby').value.trim(),

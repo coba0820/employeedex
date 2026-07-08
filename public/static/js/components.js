@@ -108,6 +108,13 @@ const Components = (() => {
     return `<span class="rarity-pill rarity-${escapeHtml(rarityId)}-bg">${escapeHtml(r.label)}</span>`;
   }
 
+  function formatMbti(mbti, masters) {
+    const code = escapeHtml(mbti || '');
+    if (!code) return '';
+    const name = masters && masters.mbtiInfo ? masters.mbtiInfo[mbti] : '';
+    return name ? `${code}（${escapeHtml(name)}）` : code;
+  }
+
   function renderTagChip(tagId, masters, opts) {
     opts = opts || {};
     const t = (masters.tags || []).find(x => x.id === tagId);
@@ -141,7 +148,7 @@ const Components = (() => {
         </div>
         <div class="emp-card-meta">
           <span class="dept-pill" style="background:${dept.color}">${escapeHtml(dept.name)}</span>
-          <span class="mbti-pill">${escapeHtml(emp.mbti)}</span>
+          <span class="mbti-pill">${formatMbti(emp.mbti, masters)}</span>
           ${renderRarityBadge(emp.rarity, masters)}
         </div>
         <p class="emp-card-catch">${escapeHtml(emp.catchphrase)}</p>
@@ -244,7 +251,7 @@ const Components = (() => {
 
   return {
     escapeHtml, renderSidebar, bindSidebar, renderFooter, renderRarityBadge, renderTagChip,
-    renderEmployeeCard, bindFavToggles, bindCardLinks,
+    renderEmployeeCard, bindFavToggles, bindCardLinks, formatMbti,
     showToast, openModal, confirmDialog
   };
 })();

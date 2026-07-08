@@ -44,6 +44,7 @@ const CardRenderer = (() => {
     const tenure = DataStore.calcTenure(emp.joinDate);
     const showSparkle = ['UR', 'Legend', 'SSR'].includes(emp.rarity);
     const miniClass = opts.mini ? ' tcard-mini-preview' : '';
+    const mbtiLabel = Components.formatMbti(emp.mbti, masters);
 
     return `
       <div class="tcard rarity-${esc(emp.rarity)}${miniClass}" id="${opts.idPrefix || 'tcard'}-${emp.id}" data-emp-id="${emp.id}">
@@ -59,7 +60,7 @@ const CardRenderer = (() => {
           <div class="tcard-type-stack">
             <span class="tcard-type-icon-badge" title="${esc(cardType.name)}"><i class="fa-solid ${cardType.icon}"></i></span>
           </div>
-          <span class="tcard-mbti-float">${esc(emp.mbti)}</span>
+          <span class="tcard-mbti-float">${mbtiLabel}</span>
           <div class="tcard-name-overlay">
             <div class="tcard-name-plate">${esc(emp.name)}</div>
             <div class="tcard-nickname-plate">${esc(emp.nickname)}</div>
