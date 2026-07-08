@@ -1,71 +1,76 @@
 /* ============================================================
    dataStore.js
-   データ層。JSON(初期データ) + localStorage(編集差分/お気に入り/認証)
-   将来的に SQLite / Supabase へ移行しやすいよう、
-   全てのデータ操作は DataStore の非同期メソッド経由に統一する。
+   D1-backed data layer. All application data is loaded and
+   persisted through /api/* endpoints.
    ============================================================ */
 
 const DataStore = (() => {
-  const LS_KEYS = {
-    employees: 'edx_employees_v1',       // 社員データの上書き保存(全量スナップショット)
-    masters: 'edx_masters_v1',           // マスタデータの上書き保存
-    favorites: 'edx_favorites_v1',       // お気に入りID配列
-    adminAuth: 'edx_admin_auth_v1',      // 管理者ログイン状態
-    cardDesign: 'edx_card_design_v1'     // カードデザイン設定(将来拡張用)
-  };
-
-  const ADMIN_PASSCODE = 'EMPLOYEDEX2026'; // デモ用パスコード
-
-  let _employees = null;
-  let _masters = null;
+  let _employees = [];
+  let _masters = {};
+  let _favorites = [];
+  let _adminLoggedIn = false;
   let _initialized = false;
 
-  async function _fetchJSON(path) {
-    const res = await fetch(path, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch ' + path);
-    return res.json();
+  async function _api(path, options) {
+    const opts = Object.assign({ credentials: 'same-origin', cache: 'no-store' }, options || {});
+    opts.headers = Object.assign({}, opts.headers || {});
+    if (opts.body && !opts.headers['Content-Type']) {
+      opts.headers['Content-Type'] = 'application/json';
+    }
+
+    const res = await fetch(path, opts);
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      const message = data && data.error ? data.error : 'API request failed: ' + path;
+      throw new Error(message);
+    }
+    return data;
   }
 
-  function _loadLS(key, fallback) {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return fallback;
-      return JSON.parse(raw);
-    } catch (e) {
-      console.warn('LS parse error', key, e);
-      return fallback;
-    }
+  function _clone(value) {
+    return JSON.parse(JSON.stringify(value));
   }
 
-  function _saveLS(key, value) {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch (e) {
-      console.warn('LS save error', key, e);
-    }
+  function _ensureMasterCollections() {
+    _masters.departments = Array.isArray(_masters.departments) ? _masters.departments : [];
+    _masters.rarities = Array.isArray(_masters.rarities) ? _masters.rarities : [];
+    _masters.cardTypes = Array.isArray(_masters.cardTypes) ? _masters.cardTypes : [];
+    _masters.tags = Array.isArray(_masters.tags) ? _masters.tags : [];
+    _masters.mbtiOptions = Array.isArray(_masters.mbtiOptions) ? _masters.mbtiOptions : [];
+    _masters.genderOptions = Array.isArray(_masters.genderOptions) ? _masters.genderOptions : [];
+    _masters.statLabels = Array.isArray(_masters.statLabels) ? _masters.statLabels : [];
+    _masters.mbtiInfo = _masters.mbtiInfo && typeof _masters.mbtiInfo === 'object' ? _masters.mbtiInfo : {};
   }
 
   async function init() {
     if (_initialized) return;
-    const [empData, masterData] = await Promise.all([
-      _fetchJSON('/static/data/employees.json'),
-      _fetchJSON('/static/data/masters.json')
+    const [employees, masters, favorites, session] = await Promise.all([
+      _api('/api/employees'),
+      _api('/api/masters'),
+      _api('/api/favorites'),
+      _api('/api/admin/session')
     ]);
 
-    const overriddenEmp = _loadLS(LS_KEYS.employees, null);
-    const overriddenMasters = _loadLS(LS_KEYS.masters, null);
-
-    _employees = overriddenEmp && Array.isArray(overriddenEmp) ? overriddenEmp : empData;
-    _masters = overriddenMasters && typeof overriddenMasters === 'object' ? overriddenMasters : masterData;
-
+    _employees = Array.isArray(employees) ? employees : [];
+    _masters = masters && typeof masters === 'object' ? masters : {};
+    _favorites = Array.isArray(favorites) ? favorites : [];
+    _adminLoggedIn = !!(session && session.loggedIn);
+    _ensureMasterCollections();
     _initialized = true;
   }
 
-  function _persistEmployees() {
-    _saveLS(LS_KEYS.employees, _employees);
+  async function refreshEmployees() {
+    _employees = await _api('/api/employees');
+    return _employees;
   }
-  function _persistMasters() {
-    _saveLS(LS_KEYS.masters, _masters);
+
+  async function saveMasters(nextMasters) {
+    _masters = await _api('/api/masters', {
+      method: 'PUT',
+      body: JSON.stringify(nextMasters)
+    });
+    _ensureMasterCollections();
+    return _masters;
   }
 
   /* ---------------- Employees ---------------- */
@@ -76,132 +81,153 @@ const DataStore = (() => {
 
   async function getEmployeeById(id) {
     await init();
-    return _employees.find(e => e.id === id) || null;
+    const cached = _employees.find(e => e.id === id);
+    if (cached) return cached;
+    return _api('/api/employees/' + encodeURIComponent(id));
   }
 
   async function addEmployee(emp) {
     await init();
-    const maxNum = _employees.reduce((max, e) => {
-      const n = parseInt((e.number || '').replace(/\D/g, ''), 10);
-      return isNaN(n) ? max : Math.max(max, n);
-    }, 0);
-    const nextNum = maxNum + 1;
-    emp.id = 'emp' + String(Date.now());
-    emp.number = 'No.' + String(nextNum).padStart(3, '0');
-    _employees.push(emp);
-    _persistEmployees();
-    return emp;
+    const created = await _api('/api/employees', {
+      method: 'POST',
+      body: JSON.stringify(emp)
+    });
+    await refreshEmployees();
+    return created;
   }
 
   async function updateEmployee(id, patch) {
     await init();
+    const updated = await _api('/api/employees/' + encodeURIComponent(id), {
+      method: 'PUT',
+      body: JSON.stringify(patch)
+    });
     const idx = _employees.findIndex(e => e.id === id);
-    if (idx === -1) return null;
-    _employees[idx] = Object.assign({}, _employees[idx], patch);
-    _persistEmployees();
-    return _employees[idx];
+    if (idx >= 0) _employees[idx] = updated;
+    else _employees.push(updated);
+    return updated;
   }
 
   async function deleteEmployee(id) {
     await init();
+    await _api('/api/employees/' + encodeURIComponent(id), { method: 'DELETE' });
     _employees = _employees.filter(e => e.id !== id);
-    _persistEmployees();
+    _favorites = _favorites.filter(f => f !== id);
     return true;
   }
 
   async function resetEmployeesToDefault() {
-    localStorage.removeItem(LS_KEYS.employees);
-    _initialized = false;
     await init();
+    await refreshEmployees();
   }
 
   /* ---------------- Masters ---------------- */
   async function getMasters() {
     await init();
-    return JSON.parse(JSON.stringify(_masters));
+    return _clone(_masters);
   }
 
   async function updateMasters(patch) {
     await init();
-    _masters = Object.assign({}, _masters, patch);
-    _persistMasters();
-    return _masters;
+    const next = Object.assign({}, _masters, patch);
+    return saveMasters(next);
   }
 
   async function addDepartment(dept) {
     await init();
-    _masters.departments.push(dept);
-    _persistMasters();
+    const next = _clone(_masters);
+    next.departments = Array.isArray(next.departments) ? next.departments : [];
+    next.departments.push(dept);
+    await saveMasters(next);
     return _masters.departments;
   }
+
   async function updateDepartment(id, patch) {
     await init();
-    const idx = _masters.departments.findIndex(d => d.id === id);
+    const next = _clone(_masters);
+    const idx = next.departments.findIndex(d => d.id === id);
     if (idx === -1) return null;
-    _masters.departments[idx] = Object.assign({}, _masters.departments[idx], patch);
-    _persistMasters();
+    next.departments[idx] = Object.assign({}, next.departments[idx], patch);
+    await saveMasters(next);
     return _masters.departments[idx];
   }
+
   async function deleteDepartment(id) {
     await init();
-    _masters.departments = _masters.departments.filter(d => d.id !== id);
-    _persistMasters();
+    const next = _clone(_masters);
+    next.departments = next.departments.filter(d => d.id !== id);
+    await saveMasters(next);
     return true;
   }
 
   async function addTag(tag) {
     await init();
-    _masters.tags.push(tag);
-    _persistMasters();
+    const next = _clone(_masters);
+    next.tags = Array.isArray(next.tags) ? next.tags : [];
+    next.tags.push(tag);
+    await saveMasters(next);
     return _masters.tags;
   }
+
   async function deleteTag(id) {
     await init();
-    _masters.tags = _masters.tags.filter(t => t.id !== id);
-    _persistMasters();
+    const next = _clone(_masters);
+    next.tags = next.tags.filter(t => t.id !== id);
+    await saveMasters(next);
     return true;
   }
 
   async function updateRarity(id, patch) {
     await init();
-    const idx = _masters.rarities.findIndex(r => r.id === id);
+    const next = _clone(_masters);
+    const idx = next.rarities.findIndex(r => r.id === id);
     if (idx === -1) return null;
-    _masters.rarities[idx] = Object.assign({}, _masters.rarities[idx], patch);
-    _persistMasters();
+    next.rarities[idx] = Object.assign({}, next.rarities[idx], patch);
+    await saveMasters(next);
     return _masters.rarities[idx];
   }
 
   /* ---------------- Favorites ---------------- */
   function getFavorites() {
-    return _loadLS(LS_KEYS.favorites, []);
+    return _favorites.slice();
   }
+
   function isFavorite(id) {
-    return getFavorites().includes(id);
+    return _favorites.includes(id);
   }
-  function toggleFavorite(id) {
-    let favs = getFavorites();
-    if (favs.includes(id)) {
-      favs = favs.filter(f => f !== id);
-    } else {
-      favs.push(id);
-    }
-    _saveLS(LS_KEYS.favorites, favs);
-    return favs.includes(id);
+
+  async function toggleFavorite(id) {
+    await init();
+    const wasFavorite = _favorites.includes(id);
+    const data = await _api('/api/favorites/' + encodeURIComponent(id), {
+      method: wasFavorite ? 'DELETE' : 'POST'
+    });
+    _favorites = data && Array.isArray(data.favorites) ? data.favorites : _favorites;
+    return !wasFavorite;
   }
 
   /* ---------------- Admin auth ---------------- */
   function isAdminLoggedIn() {
-    return _loadLS(LS_KEYS.adminAuth, false) === true;
+    return _adminLoggedIn === true;
   }
-  function adminLogin(passcode) {
-    if (passcode === ADMIN_PASSCODE) {
-      _saveLS(LS_KEYS.adminAuth, true);
-      return true;
+
+  async function adminLogin(passcode) {
+    try {
+      const session = await _api('/api/admin/login', {
+        method: 'POST',
+        body: JSON.stringify({ passcode })
+      });
+      _adminLoggedIn = !!(session && session.loggedIn);
+      return _adminLoggedIn;
+    } catch (e) {
+      _adminLoggedIn = false;
+      return false;
     }
-    return false;
   }
-  function adminLogout() {
-    localStorage.removeItem(LS_KEYS.adminAuth);
+
+  async function adminLogout() {
+    await _api('/api/admin/logout', { method: 'POST' }).catch(() => null);
+    _adminLoggedIn = false;
   }
 
   /* ---------------- Helpers ---------------- */

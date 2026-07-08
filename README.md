@@ -25,11 +25,12 @@
 | `/admin` | 管理画面(要パスコード: `EMPLOYEDEX2026`) |
 
 ## データ構造・使用ストレージ
-- **現状**: ローカルJSON + localStorage方式(バックエンドサーバー不要)
-  - `public/static/data/employees.json`: 社員データ本体(10名分のダミーデータ)
-  - `public/static/data/masters.json`: マスタデータ(部署・レアリティ・カードタイプ・タグ・MBTI選択肢・MBTI性格名称・能力値ラベル)
-  - `localStorage`: 管理画面での編集内容(社員データ/マスタデータの差分スナップショット)、お気に入りID一覧、管理者ログイン状態を保持
-- **データ層**: `public/static/js/dataStore.js` が全データ操作を非同期メソッド経由に統一しており、将来的に Cloudflare D1 / Supabase などへ移行しやすい設計になっている
+- **現状**: Cloudflare D1方式
+  - `employees`: 社員データ本体
+  - `app_settings`: マスタデータ(部署・レアリティ・カードタイプ・タグ・MBTI選択肢・MBTI性格名称・能力値ラベル)
+  - `favorite_employees`: 匿名クライアントID単位のお気に入りID一覧
+- **データ層**: `public/static/js/dataStore.js` が `/api/*` 経由でD1を読み書きする。localStorageと静的JSONは使用しない
+- **初期化**: `migrations/0001_initial_d1.sql` をD1へ適用すると、テーブル作成と初期データ投入が行われる
 
 ## 技術スタック
 - **フロントエンド**: Vanilla JS(SPA自作ルーター) + TailwindCSS不使用の独自CSS設計システム + FontAwesome
@@ -44,9 +45,6 @@ src/
   renderer.tsx      # HTML head/body定義、スクリプト読み込み順
 public/static/
   css/style.css     # デザインシステム(サイドバー+ダークネイビーカード)
-  data/
-    employees.json  # 社員データ
-    masters.json    # マスタデータ
   images/employees/ # 社員写真(001.png〜010.png)
   js/
     dataStore.js         # データ層(CRUD・お気に入り・認証・日付計算)
@@ -57,7 +55,9 @@ public/static/
       home.js       # ホーム(検索・絞り込み・並び替え)
       detail.js     # 社員詳細
       favorites.js  # お気に入り一覧
-      admin.js      # 管理画面(CRUD)
+    admin.js      # 管理画面(CRUD)
+migrations/
+  0001_initial_d1.sql # D1テーブル作成・初期データ投入
 ```
 
 ## 使い方ガイド
@@ -68,7 +68,6 @@ public/static/
 5. 管理者は `/admin` からパスコード(`EMPLOYEDEX2026`)でログインし、社員データ・部署・タグ・レアリティを編集可能
 
 ## 未実装・今後の拡張候補
-- Cloudflare D1 / KV への移行(現状はJSON + localStorageのローカル完結型)
 - 管理画面からのカードデザイン(配色・レイアウト)自体のカスタマイズ
 - LINE/Slackへのカード直接共有機能(現状はPNGダウンロードのみ)
 - 社員写真のアップロード機能(現状は管理画面でURL入力のみ)

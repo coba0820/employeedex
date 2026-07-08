@@ -56,8 +56,8 @@ const AdminPage = (() => {
         renderPanel();
       });
     });
-    document.getElementById('admin-logout-btn').addEventListener('click', () => {
-      DataStore.adminLogout();
+    document.getElementById('admin-logout-btn').addEventListener('click', async () => {
+      await DataStore.adminLogout();
       Router.navigate('/admin');
     });
 
@@ -88,9 +88,9 @@ const AdminPage = (() => {
       </div>
     `;
     Components.bindSidebar(root);
-    const doLogin = () => {
+    const doLogin = async () => {
       const val = document.getElementById('passcode-input').value;
-      if (DataStore.adminLogin(val)) {
+      if (await DataStore.adminLogin(val)) {
         Router.navigate('/admin');
       } else {
         document.getElementById('login-error').textContent = 'パスコードが正しくありません';

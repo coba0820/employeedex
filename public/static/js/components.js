@@ -164,14 +164,19 @@ const Components = (() => {
 
   function bindFavToggles(root) {
     (root || document).querySelectorAll('[data-fav-toggle]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         e.preventDefault();
         const id = btn.getAttribute('data-fav-toggle');
-        const nowFav = DataStore.toggleFavorite(id);
-        btn.classList.toggle('active', nowFav);
-        showToast(nowFav ? 'お気に入りに追加しました' : 'お気に入りを解除しました', nowFav ? 'success' : 'default');
-        document.dispatchEvent(new CustomEvent('favorites-changed'));
+        try {
+          const nowFav = await DataStore.toggleFavorite(id);
+          btn.classList.toggle('active', nowFav);
+          showToast(nowFav ? 'お気に入りに追加しました' : 'お気に入りを解除しました', nowFav ? 'success' : 'default');
+          document.dispatchEvent(new CustomEvent('favorites-changed'));
+        } catch (err) {
+          console.error(err);
+          showToast('お気に入りの更新に失敗しました', 'error');
+        }
       });
     });
   }

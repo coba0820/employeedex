@@ -202,12 +202,17 @@ const DetailPage = (() => {
     });
 
     const favBtn = document.getElementById('fav-btn-large');
-    favBtn.addEventListener('click', () => {
-      const nowFav = DataStore.toggleFavorite(emp.id);
-      favBtn.classList.toggle('active', nowFav);
-      favBtn.innerHTML = `<i class="fa-solid fa-heart"></i> ${nowFav ? 'お気に入り済み' : 'お気に入り'}`;
-      Components.showToast(nowFav ? 'お気に入りに追加しました' : 'お気に入りを解除しました', nowFav ? 'success' : 'default');
-      document.dispatchEvent(new CustomEvent('favorites-changed'));
+    favBtn.addEventListener('click', async () => {
+      try {
+        const nowFav = await DataStore.toggleFavorite(emp.id);
+        favBtn.classList.toggle('active', nowFav);
+        favBtn.innerHTML = `<i class="fa-solid fa-heart"></i> ${nowFav ? 'お気に入り済み' : 'お気に入り'}`;
+        Components.showToast(nowFav ? 'お気に入りに追加しました' : 'お気に入りを解除しました', nowFav ? 'success' : 'default');
+        document.dispatchEvent(new CustomEvent('favorites-changed'));
+      } catch (err) {
+        console.error(err);
+        Components.showToast('お気に入りの更新に失敗しました', 'error');
+      }
     });
 
     // Keyboard navigation

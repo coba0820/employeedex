@@ -6,6 +6,8 @@
     "build": "vite build",
     "preview": "wrangler pages dev",
     "deploy": "npm run build && wrangler pages deploy",
+    "db:migrate:local": "wrangler d1 migrations apply employeedex-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply employeedex-db --remote",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
   "dependencies": {
