@@ -355,7 +355,7 @@ const HomePage = (() => {
               <div class="hero-left">
                 <span class="hero-eyebrow"><i class="fa-solid fa-sparkles"></i> 社内プロフィールデータベース</span>
                 <h1>SVS社員図鑑</h1>
-                <p>社員一人ひとりをキャラクターとして紹介する、社内コミュニケーションのための"社員ポケモン図鑑"。カードを集めて、まだ話したことのない同僚を見つけよう。</p>
+                <p>社員一人ひとりの個性や強み、価値観を知り、新しいつながりを生み出すための社員図鑑です。部署や役職を超えて、お互いをもっと知るきっかけをつくります。</p>
                 ${EmployeeSearch.renderPanel(masters, state, { prefix: 'home', compact: true, filterOpen: false })}
               </div>
               ${featured ? `
