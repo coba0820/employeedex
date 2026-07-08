@@ -50,7 +50,6 @@ const CardRenderer = (() => {
         <div class="tcard-rim"></div>
 
         <div class="tcard-header-row">
-          <span class="tcard-number-badge"><i class="fa-solid fa-star"></i> ${esc(emp.number)}</span>
           <span class="tcard-rarity-badge" style="background:${rarity.color || '#888'}">${esc(rarity.label)}</span>
         </div>
 

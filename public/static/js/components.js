@@ -17,10 +17,8 @@ const Components = (() => {
   /* ---------------- Sidebar (SaaS dashboard style) ---------------- */
   const SIDEBAR_LINKS = [
     { key: 'home', path: '/', icon: 'fa-solid fa-house', label: 'ホーム' },
-    { key: 'members', path: '/', icon: 'fa-solid fa-users', label: 'メンバー一覧' },
-    { key: 'search', path: '/?focus=search', icon: 'fa-solid fa-magnifying-glass', label: '検索' },
-    { key: 'tags', path: '/?focus=tags', icon: 'fa-solid fa-tags', label: 'タグから探す' },
-    { key: 'random', path: 'javascript:void(0)', icon: 'fa-solid fa-shuffle', label: 'ランダムで見る', action: 'random' },
+    { key: 'search', path: '/search', icon: 'fa-solid fa-magnifying-glass', label: '検索' },
+    { key: 'random', path: '/random', icon: 'fa-solid fa-shuffle', label: 'ランダムで見る' },
     { key: 'favorites', path: '/favorites', icon: 'fa-solid fa-heart', label: 'お気に入り' }
   ];
 
@@ -95,15 +93,6 @@ const Components = (() => {
       });
     }
 
-    document.querySelectorAll('[data-sidebar-action="random"]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        await DataStore.init();
-        const employees = await DataStore.getEmployees();
-        if (employees.length === 0) return;
-        const pick = employees[Math.floor(Math.random() * employees.length)];
-        Router.navigate('/employee/' + pick.id);
-      });
-    });
   }
 
   function renderFooter() {
@@ -146,7 +135,6 @@ const Components = (() => {
             </button>
           </div>
           <div style="min-width:0;">
-            <div class="emp-card-number">${escapeHtml(emp.number)}</div>
             <h3 class="emp-card-name">${escapeHtml(emp.name)}</h3>
             <p class="emp-card-nickname">${escapeHtml(emp.nickname)}</p>
           </div>

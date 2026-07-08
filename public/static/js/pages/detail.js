@@ -58,8 +58,6 @@ const DetailPage = (() => {
     const tenure = DataStore.calcTenure(emp.joinDate);
     const age = DataStore.calcAge(emp.birthDate);
     const isFav = DataStore.isFavorite(emp.id);
-    const mbtiName = (masters.mbtiInfo || {})[emp.mbti] || '';
-    const loveMbtiName = (masters.mbtiInfo || {})[emp.loveMbti] || '';
 
     const statBarsHtml = (masters.statLabels || []).map(sl => {
       const val = (emp.stats && emp.stats[sl.id]) || 0;
@@ -114,7 +112,6 @@ const DetailPage = (() => {
 
           <div class="detail-info-head">
             <div class="detail-badges-row">
-              <span class="detail-number-tag">${esc(emp.number)}</span>
               ${Components.renderRarityBadge(emp.rarity, masters)}
               <span class="dept-pill" style="background:${dept.color}">${esc(dept.name)}</span>
             </div>
@@ -125,16 +122,10 @@ const DetailPage = (() => {
             <p class="detail-position">${esc(emp.position)} ／ ${esc(emp.jobDescription)}</p>
             <p class="detail-catchphrase">${esc(emp.catchphrase)}</p>
 
-            <div class="detail-info-grid">
+            <div class="detail-info-grid single">
               <div class="info-panel mbti">
                 <span class="info-panel-label">MBTI</span>
                 <div class="info-panel-value">${esc(emp.mbti)}</div>
-                <div class="info-panel-desc">${mbtiName ? '主人公タイプ・' + esc(mbtiName) : ''}</div>
-              </div>
-              <div class="info-panel love">
-                <span class="info-panel-label">恋愛MBTI</span>
-                <div class="info-panel-value">${esc(emp.loveMbti)}</div>
-                <div class="info-panel-desc">${loveMbtiName ? esc(loveMbtiName) + 'タイプ' : ''}</div>
               </div>
             </div>
 

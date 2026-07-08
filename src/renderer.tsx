@@ -41,6 +41,7 @@ export const renderer = jsxRenderer(({ children }) => {
         <script src="/static/js/components.js"></script>
         <script src="/static/js/card-renderer.js"></script>
         <script src="/static/js/pages/home.js"></script>
+        <script src="/static/js/pages/random.js"></script>
         <script src="/static/js/pages/detail.js"></script>
         <script src="/static/js/pages/favorites.js"></script>
         <script src="/static/js/pages/admin.js"></script>

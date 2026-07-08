@@ -9,6 +9,8 @@ const Router = (() => {
   function parseRoute(fullPath) {
     const path = (fullPath || '/').split('?')[0].split('#')[0] || '/';
     if (path === '/' || path === '') return { name: 'home' };
+    if (path === '/search') return { name: 'search' };
+    if (path === '/random') return { name: 'random' };
     if (path === '/favorites') return { name: 'favorites' };
     if (path === '/admin') return { name: 'admin' };
     const empMatch = path.match(/^\/employee\/([^/]+)$/);
@@ -22,6 +24,8 @@ const Router = (() => {
 
     try {
       if (route.name === 'home') await HomePage.render(appEl);
+      else if (route.name === 'search') await SearchPage.render(appEl);
+      else if (route.name === 'random') await RandomPage.render(appEl);
       else if (route.name === 'favorites') await FavoritesPage.render(appEl);
       else if (route.name === 'admin') await AdminPage.render(appEl);
       else if (route.name === 'detail') await DetailPage.render(appEl, route.id);

@@ -42,8 +42,8 @@ const FavoritesPage = (() => {
       grid.innerHTML = `
         <div class="empty-state" style="grid-column:1/-1;">
           <i class="fa-regular fa-heart"></i>
-          <h3>まだお気に入りがありません</h3>
-          <p>図鑑ホームで気になる社員のハートマークを押してみましょう</p>
+          <h3>お気に入り登録された社員はいません</h3>
+          <p>気になる社員のハートマークを押すと、ここに表示されます</p>
           <a href="/" data-link class="btn btn-primary" style="margin-top:20px;">図鑑ホームへ</a>
         </div>
       `;

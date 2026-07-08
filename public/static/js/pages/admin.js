@@ -77,7 +77,7 @@ const AdminPage = (() => {
             <div class="admin-login-box">
               <i class="fa-solid fa-lock"></i>
               <h2>管理者ログイン</h2>
-              <p>パスコードを入力してください（デモ用: EMPLOYEDEX2026）</p>
+              <p>パスコードを入力してください</p>
               <div class="login-error" id="login-error"></div>
               <input type="password" id="passcode-input" placeholder="パスコード" />
               <button class="btn btn-accent" style="width:100%;" id="login-btn">ログイン</button>

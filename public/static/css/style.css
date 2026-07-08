@@ -212,20 +212,37 @@ body {
 .hero-stats { display: flex; gap: 22px; margin-top: 18px; flex-wrap: wrap; }
 .hero-stat .num { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; }
 .hero-stat .lbl { font-size: 11.5px; color: var(--text-tertiary); font-weight: 700; }
+.home-hero { align-items: center; gap: 34px; }
+.home-hero .search-panel { margin: 22px 0 0; max-width: 620px; }
+.home-search-results,
+.search-results-area { margin-top: 18px; }
+.search-ready-state { background: transparent; border: 1px dashed var(--border-strong); border-radius: var(--radius-lg); }
 
 /* Featured mini trading card promo (home hero right side) */
 .hero-promo {
-  width: 300px; flex-shrink: 0;
+  width: 360px; flex-shrink: 0;
   background: linear-gradient(160deg, var(--card-navy-1), var(--card-navy-2));
-  border-radius: var(--radius-lg); padding: 20px;
-  box-shadow: var(--shadow-lg); position: relative; overflow: hidden;
+  border-radius: var(--radius-lg); padding: 20px 22px 22px;
+  box-shadow: var(--shadow-lg); position: relative; overflow: visible;
+  display: flex; flex-direction: column; align-items: center;
 }
-.hero-promo::before {
-  content: ''; position: absolute; top: -60px; right: -60px; width: 180px; height: 180px;
-  background: radial-gradient(circle, rgba(255,255,255,0.12), transparent 70%);
-}
-.hero-promo-label { color: rgba(255,255,255,0.75); font-size: 12px; font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.hero-promo-label { color: rgba(255,255,255,0.75); font-size: 12px; font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; align-self: flex-start; }
 .hero-promo-label i { color: #ffd75e; }
+.hero-promo-link { width: 100%; margin-top: 16px; justify-content: center; }
+.hero-promo .tcard-mini-preview {
+  width: 264px;
+  transform: none;
+  margin: 0 auto;
+  cursor: pointer;
+}
+.hero-promo .tcard-photo-zone img {
+  object-fit: contain;
+  background: #0f1528;
+}
+.hero-promo .tcard-name-overlay .tcard-name-plate { font-size: 16px; line-height: 1.2; }
+.hero-promo .tcard-catch-row { font-size: 10.5px; padding: 8px 10px; min-height: 32px; }
+.hero-promo .tcard-stats-panel { padding: 9px 10px; gap: 5px 10px; }
+.hero-promo .tcard-stat-item .lbl { font-size: 8px; }
 @media (max-width: 860px) { .hero-promo { display: none; } }
 
 /* ---------- Search / Filter Panel ---------- */
@@ -346,7 +363,6 @@ body {
 .emp-card-fav-btn.active i { animation: heartPop .4s var(--ease-spring); }
 @keyframes heartPop { 0%{transform:scale(0.6);} 60%{transform:scale(1.3);} 100%{transform:scale(1);} }
 
-.emp-card-number { font-size: 10px; font-weight: 800; color: var(--text-tertiary); letter-spacing: 0.04em; margin-bottom: 2px; }
 .emp-card-name { font-size: 15px; font-weight: 800; letter-spacing: -0.01em; margin: 0; line-height: 1.3; }
 .emp-card-nickname { font-size: 11.5px; color: var(--accent-dark); font-weight: 700; }
 
@@ -408,6 +424,7 @@ body {
 
 /* Right-side info panels grid (like reference design) */
 .detail-info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.detail-info-grid.single { grid-template-columns: minmax(220px, 360px); }
 @media (max-width: 560px) { .detail-info-grid { grid-template-columns: 1fr; } }
 
 .info-panel {
@@ -514,11 +531,7 @@ body {
   border: 1.5px solid rgba(255,255,255,0.14);
 }
 
-.tcard-header-row { display: flex; align-items: flex-start; justify-content: space-between; position: relative; z-index: 4; margin-bottom: 8px; }
-.tcard-number-badge {
-  display: inline-flex; align-items: center; gap: 5px; color: #ffd75e;
-  font-size: 11px; font-weight: 900; letter-spacing: 0.03em;
-}
+.tcard-header-row { display: flex; align-items: flex-start; justify-content: flex-end; position: relative; z-index: 4; margin-bottom: 8px; min-height: 22px; }
 .tcard-rarity-badge {
   font-size: 10.5px; font-weight: 900; color: white;
   padding: 4px 12px; border-radius: var(--radius-round); letter-spacing: 0.04em;
@@ -597,6 +610,17 @@ body {
 
 /* Mini preview card (used in home hero promo) */
 .tcard-mini-preview { transform: scale(0.86); transform-origin: top center; margin: -18px 0; }
+
+/* ---------- Random page ---------- */
+.random-page { display: flex; justify-content: center; padding: 6px 0 48px; }
+.random-card-stage {
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+  width: min(100%, 420px);
+}
+.random-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+@media (max-width: 420px) {
+  .random-page .tcard { width: min(300px, 88vw); }
+}
 
 /* ---------- Favorites page ---------- */
 .page-header { padding: 4px 0 22px; }
