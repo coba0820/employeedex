@@ -15,40 +15,40 @@ type JsonRecord = Record<string, unknown>
 
 type EmployeeRow = {
   id: string
-  number: string | null
-  name: string | null
-  nickname: string | null
-  photo: string | null
+  number?: string | null
+  name?: string | null
+  nickname?: string | null
+  photo?: string | null
   photo_url?: string | null
-  department: string | null
-  position: string | null
-  job_description: string | null
-  gender: string | null
-  birth_date: string | null
+  department?: string | null
+  position?: string | null
+  job_description?: string | null
+  gender?: string | null
+  birth_date?: string | null
   birthdate?: string | null
-  area: string | null
-  join_date: string | null
+  area?: string | null
+  join_date?: string | null
   joined_at?: string | null
-  catchphrase: string | null
+  catchphrase?: string | null
   catch_copy?: string | null
-  mbti: string | null
-  love_mbti: string | null
-  strengths: string | null
-  weaknesses: string | null
-  hobby: string | null
+  mbti?: string | null
+  love_mbti?: string | null
+  strengths?: string | null
+  weaknesses?: string | null
+  hobby?: string | null
   hobbies?: string | null
-  favorites: string | null
-  work_style: string | null
-  personality_type: string | null
+  favorites?: string | null
+  work_style?: string | null
+  personality_type?: string | null
   personality?: string | null
-  character_in_office: string | null
+  character_in_office?: string | null
   character_type?: string | null
-  free_comment: string | null
+  free_comment?: string | null
   comment?: string | null
-  rarity: string | null
-  card_type: string | null
-  tags: string | null
-  stats: string | null
+  rarity?: string | null
+  card_type?: string | null
+  tags?: string | null
+  stats?: string | null
 }
 
 type Employee = {
@@ -85,6 +85,43 @@ const ADMIN_PASSCODE = 'EMPLOYEDEX2026'
 const ADMIN_COOKIE = 'edx_admin_session'
 const CLIENT_COOKIE = 'edx_client_id'
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365
+const EMPLOYEE_WRITE_COLUMNS = [
+  'id',
+  'number',
+  'name',
+  'nickname',
+  'photo',
+  'photo_url',
+  'department',
+  'position',
+  'job_description',
+  'gender',
+  'birth_date',
+  'birthdate',
+  'area',
+  'join_date',
+  'joined_at',
+  'catchphrase',
+  'catch_copy',
+  'mbti',
+  'love_mbti',
+  'strengths',
+  'weaknesses',
+  'hobby',
+  'hobbies',
+  'favorites',
+  'work_style',
+  'personality_type',
+  'personality',
+  'character_in_office',
+  'character_type',
+  'free_comment',
+  'comment',
+  'rarity',
+  'card_type',
+  'tags',
+  'stats'
+]
 
 const app = new Hono<Env>()
 
@@ -109,6 +146,17 @@ function parseJson<T>(value: unknown, fallback: T): T {
   }
 }
 
+function fallbackNumber(row: EmployeeRow, index = 0) {
+  const explicit = asText(row.number)
+  if (explicit) return explicit
+
+  const n = Number.parseInt(asText(row.id).replace(/\D/g, ''), 10)
+  if (!Number.isNaN(n) && n > 0) {
+    return 'No.' + String(n).padStart(3, '0')
+  }
+  return 'No.' + String(index + 1).padStart(3, '0')
+}
+
 async function readJsonBody(c: AppContext): Promise<JsonRecord> {
   try {
     return asJsonRecord(await c.req.json())
@@ -117,10 +165,10 @@ async function readJsonBody(c: AppContext): Promise<JsonRecord> {
   }
 }
 
-function toEmployee(row: EmployeeRow): Employee {
+function toEmployee(row: EmployeeRow, index = 0): Employee {
   return {
     id: row.id,
-    number: asText(row.number),
+    number: fallbackNumber(row, index),
     name: asText(row.name),
     nickname: asText(row.nickname),
     photo: asText(row.photo, asText(row.photo_url)),
@@ -182,113 +230,86 @@ function mergeEmployee(body: JsonRecord, base: Employee): Employee {
 }
 
 async function nextEmployeeNumber(db: D1Database) {
-  const { results } = await db.prepare('SELECT number FROM employees').all<{ number: string | null }>()
+  const { results } = await db.prepare('SELECT * FROM employees').all<EmployeeRow>()
   const max = results.reduce((currentMax, row) => {
-    const n = Number.parseInt((row.number || '').replace(/\D/g, ''), 10)
+    const n = Number.parseInt(fallbackNumber(row).replace(/\D/g, ''), 10)
     return Number.isNaN(n) ? currentMax : Math.max(currentMax, n)
   }, 0)
   return 'No.' + String(max + 1).padStart(3, '0')
 }
 
+async function getEmployeeColumnNames(db: D1Database) {
+  const { results } = await db.prepare('PRAGMA table_info(employees)').all<{ name: string }>()
+  return new Set(results.map((row) => row.name))
+}
+
+function valueForEmployeeColumn(employee: Employee, column: string) {
+  switch (column) {
+    case 'id': return employee.id
+    case 'number': return employee.number
+    case 'name': return employee.name
+    case 'nickname': return employee.nickname
+    case 'photo':
+    case 'photo_url': return employee.photo
+    case 'department': return employee.department
+    case 'position': return employee.position
+    case 'job_description': return employee.jobDescription
+    case 'gender': return employee.gender
+    case 'birth_date':
+    case 'birthdate': return employee.birthDate
+    case 'area': return employee.area
+    case 'join_date':
+    case 'joined_at': return employee.joinDate
+    case 'catchphrase':
+    case 'catch_copy': return employee.catchphrase
+    case 'mbti': return employee.mbti
+    case 'love_mbti': return employee.loveMbti
+    case 'strengths': return employee.strengths
+    case 'weaknesses': return employee.weaknesses
+    case 'hobby':
+    case 'hobbies': return employee.hobby
+    case 'favorites': return employee.favorites
+    case 'work_style': return employee.workStyle
+    case 'personality_type':
+    case 'personality': return employee.personalityType
+    case 'character_in_office':
+    case 'character_type': return employee.characterInOffice
+    case 'free_comment':
+    case 'comment': return employee.freeComment
+    case 'rarity': return employee.rarity
+    case 'card_type': return employee.cardType
+    case 'tags': return JSON.stringify(employee.tags)
+    case 'stats': return JSON.stringify(employee.stats)
+    default: return ''
+  }
+}
+
 async function insertEmployee(db: D1Database, employee: Employee) {
+  const schema = await getEmployeeColumnNames(db)
+  const columns = EMPLOYEE_WRITE_COLUMNS.filter((column) => schema.has(column))
+  const values = columns.map((column) => valueForEmployeeColumn(employee, column))
+  const placeholders = columns.map(() => '?').join(', ')
+
   await db.prepare(`
-    INSERT INTO employees (
-      id, number, name, nickname, photo, department, position, job_description,
-      gender, birth_date, area, join_date, catchphrase, mbti, love_mbti,
-      strengths, weaknesses, hobby, favorites, work_style, personality_type,
-      character_in_office, free_comment, rarity, card_type, tags, stats
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).bind(
-    employee.id,
-    employee.number,
-    employee.name,
-    employee.nickname,
-    employee.photo,
-    employee.department,
-    employee.position,
-    employee.jobDescription,
-    employee.gender,
-    employee.birthDate,
-    employee.area,
-    employee.joinDate,
-    employee.catchphrase,
-    employee.mbti,
-    employee.loveMbti,
-    employee.strengths,
-    employee.weaknesses,
-    employee.hobby,
-    employee.favorites,
-    employee.workStyle,
-    employee.personalityType,
-    employee.characterInOffice,
-    employee.freeComment,
-    employee.rarity,
-    employee.cardType,
-    JSON.stringify(employee.tags),
-    JSON.stringify(employee.stats)
-  ).run()
+    INSERT INTO employees (${columns.join(', ')})
+    VALUES (${placeholders})
+  `).bind(...values).run()
 }
 
 async function updateEmployeeRow(db: D1Database, employee: Employee) {
+  const schema = await getEmployeeColumnNames(db)
+  const columns = EMPLOYEE_WRITE_COLUMNS.filter((column) => column !== 'id' && schema.has(column))
+  const assignments = columns.map((column) => `${column} = ?`)
+  const values = columns.map((column) => valueForEmployeeColumn(employee, column))
+
+  if (schema.has('updated_at')) {
+    assignments.push('updated_at = CURRENT_TIMESTAMP')
+  }
+
   await db.prepare(`
-    UPDATE employees SET
-      number = ?,
-      name = ?,
-      nickname = ?,
-      photo = ?,
-      department = ?,
-      position = ?,
-      job_description = ?,
-      gender = ?,
-      birth_date = ?,
-      area = ?,
-      join_date = ?,
-      catchphrase = ?,
-      mbti = ?,
-      love_mbti = ?,
-      strengths = ?,
-      weaknesses = ?,
-      hobby = ?,
-      favorites = ?,
-      work_style = ?,
-      personality_type = ?,
-      character_in_office = ?,
-      free_comment = ?,
-      rarity = ?,
-      card_type = ?,
-      tags = ?,
-      stats = ?,
-      updated_at = CURRENT_TIMESTAMP
+    UPDATE employees SET ${assignments.join(', ')}
     WHERE id = ?
-  `).bind(
-    employee.number,
-    employee.name,
-    employee.nickname,
-    employee.photo,
-    employee.department,
-    employee.position,
-    employee.jobDescription,
-    employee.gender,
-    employee.birthDate,
-    employee.area,
-    employee.joinDate,
-    employee.catchphrase,
-    employee.mbti,
-    employee.loveMbti,
-    employee.strengths,
-    employee.weaknesses,
-    employee.hobby,
-    employee.favorites,
-    employee.workStyle,
-    employee.personalityType,
-    employee.characterInOffice,
-    employee.freeComment,
-    employee.rarity,
-    employee.cardType,
-    JSON.stringify(employee.tags),
-    JSON.stringify(employee.stats),
-    employee.id
-  ).run()
+  `).bind(...values, employee.id).run()
 }
 
 async function getEmployeeRow(db: D1Database, id: string) {
@@ -426,10 +447,19 @@ app.delete('/api/favorites/:id', async (c) => {
 // Employee list
 app.get('/api/employees', async (c) => {
   const { results } = await c.env.DB
-    .prepare('SELECT * FROM employees ORDER BY number ASC, created_at ASC')
+    .prepare('SELECT * FROM employees')
     .all<EmployeeRow>()
 
-  return c.json(results.map(toEmployee))
+  const employees = results
+    .map((row, index) => toEmployee(row, index))
+    .sort((a, b) => {
+      const aNumber = Number.parseInt(a.number.replace(/\D/g, ''), 10)
+      const bNumber = Number.parseInt(b.number.replace(/\D/g, ''), 10)
+      if (!Number.isNaN(aNumber) && !Number.isNaN(bNumber)) return aNumber - bNumber
+      return a.name.localeCompare(b.name, 'ja')
+    })
+
+  return c.json(employees)
 })
 
 // Employee detail
